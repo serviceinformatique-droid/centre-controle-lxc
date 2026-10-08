@@ -9,12 +9,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// SÉCURITÉ & PERFORMANCE : 0% CACHE BROWSER & COMPATIBLE IFRAME (Aucun blocage)
+// ANTI-CACHE STRICT (0% Cache Navigateur) & SUPPORT TOTAL IFRAME
 app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
     res.removeHeader('X-Frame-Options');
     res.setHeader('Content-Security-Policy', "frame-ancestors * 'self'");
     next();
@@ -31,15 +30,13 @@ const getContainers = () => {
     }
 };
 
-// API: Liste des conteneurs
 app.get('/api/containers', (req, res) => {
     res.json(getContainers());
 });
 
-// API: Santé du conteneur (Disque, RAM, CPU, Mises à jour Debian)
 app.get('/api/health/:ip', (req, res) => {
     const ip = req.params.ip;
-    const cmd = `ssh -o StrictHostKeyChecking=no -o ConnectTimeout=3 root@${ip} "
+    const cmd = `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=3 root@${ip} "
         DISK=\\$(df -h / | awk 'NR==2 {print \\$5, \\$4, \\$2}');
         MEM=\\$(free -m | awk 'NR==2 {printf \\\"%.0f %d %d\\\", (\\$3/\\$2)*100, (\\$2-\\$3), \\$2}');
         LOAD=\\$(cat /proc/loadavg | awk '{print \\$1}');
@@ -79,26 +76,31 @@ app.get('/api/health/:ip', (req, res) => {
     });
 });
 
-// API: Action Maintenance
 app.post('/api/maintenance', (req, res) => {
     const { ip, action, message } = req.body;
-    if (!ip || !action) return res.status(400).json({ error: 'Paramètres manquants' });
+    if (!ip || !action) {
+        return res.status(400).json({ error: 'IP et action obligatoires' });
+    }
 
-    const safeMsg = (message || "Mise à jour du serveur en cours, le site revient dans quelques minutes.").replace(/"/g, '\\"');
-    exec(`/opt/centre-controle/scripts/maintenance_manager.sh "${ip}" "${action}" "${safeMsg}"`, (err, stdout) => {
-        if (err) return res.status(500).json({ success: false, error: err.message });
+    const safeMsg = (message || "Mise à jour du serveur en cours, le site revient dans quelques minutes.").replace(/["$`]/g, '');
+    const cmd = `/opt/centre-controle/scripts/maintenance_manager.sh "${ip}" "${action}" "${safeMsg}"`;
+
+    exec(cmd, (err, stdout, stderr) => {
+        if (err) {
+            console.error(`Erreur maintenance [${ip}]:`, stderr || err.message);
+            return res.status(500).json({ success: false, error: stderr || err.message });
+        }
         res.json({ success: true, output: stdout });
     });
 });
 
-// API: Reboot / Relance conteneur ou site
 app.post('/api/action', (req, res) => {
     const { ip, type } = req.body;
     let cmd = '';
     if (type === 'restart_web') {
-        cmd = `ssh root@${ip} "systemctl restart nginx || systemctl restart apache2 || docker restart \\$(docker ps -q) 2>/dev/null || true"`;
+        cmd = `ssh -o StrictHostKeyChecking=no root@${ip} "systemctl restart nginx || systemctl restart apache2 || true"`;
     } else if (type === 'reboot') {
-        cmd = `ssh root@${ip} "reboot"`;
+        cmd = `ssh -o StrictHostKeyChecking=no root@${ip} "reboot"`;
     }
 
     exec(cmd, (err) => {
@@ -112,5 +114,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Centre de contrôle prêt sur http://0.0.0.0:${PORT}`);
+    console.log(`Centre de contrôle prêt sur le port ${PORT}`);
 });

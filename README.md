@@ -1,32 +1,24 @@
-# Documentation Technique Complète — Centre de Contrôle Multi-LXC Proxmox
+# Centre de Contrôle Multi-LXC Proxmox (Debian 12)
 
-## 1. Vue d'ensemble du Projet
-Système d'orchestration, de supervision et de maintenance automatisée pour conteneurs LXC Debian 12 hébergés sur Proxmox VE. 
-Ce projet permet de surveiller la santé des conteneurs, de basculer une page de maintenance en temps réel et de planifier les mises à jour Debian nocturnes sans interruption imprévue.
+## Description
+Système de gestion, supervision et orchestration de la maintenance pour conteneurs LXC Proxmox Debian 12.
 
-- **Compte GitHub :** `serviceinformatique-droid`
-- **Serveur Supervision :** Conteneur LXC Debian 12 (`supervision`)
-- **Port d'écoute web :** `3000`
-- **Politique de cache :** 0 % de cache navigateur (en-têtes HTTP `no-store, no-cache, must-revalidate, max-age=0`).
-- **Support Iframe :** 100 % débloqué via la directive CSP `frame-ancestors *`.
-- **Compatibilité mobile :** 100 % responsive sans dépendance externe (CSS natif).
+- **Utilisateur GitHub :** `serviceinformatique-droid`
+- **Serveur de supervision :** LXC Debian 12 (IP : `192.168.96.136`, port `3000`)
+- **Politique de cache :** 0 % (en-têtes HTTP `no-store, no-cache, must-revalidate, max-age=0`)
+- **Support Iframe :** 100 % opérationnel (`Content-Security-Policy: frame-ancestors *`)
 
----
+## Conteneurs Gérés
+| ID | Nom | Adresse IP |
+|---|---|---|
+| 105 | portail-sante | 192.168.96.23 |
+| 108 | Fiches-inscriptions-docuseal | 192.168.96.58 |
+| 109 | Gestion-inscriptions-profs | 192.168.96.78 |
+| 111 | fiche-sanitaire-claude | 192.168.96.52 |
+| 113 | fiche-infirmerie-studio | 192.168.96.106 |
 
-## 2. Cartographie des Conteneurs LXC Déployés
-
-| CT ID | Nom du Conteneur | Adresse IP Réelle | Rôle applicatif | Répertoire Web |
-|:---:|:---|:---:|:---|:---:|
-| **105** | `portail-sante` | `192.168.96.23` | Portail Santé | `/var/www/html` |
-| **108** | `Fiches-inscriptions-docuseal` | `192.168.96.58` | DocuSeal / Inscriptions | `/var/www/html` |
-| **109** | `Gestion-inscriptions-profs` | `192.168.96.78` | Inscriptions Professeurs | `/var/www/html` |
-| **111** | `fiche-sanitaire-claude` | `192.168.96.52` | Fiches Sanitaires | `/var/www/html` |
-| **113** | `fiche-infirmerie-studio` | `192.168.96.106` | Infirmerie Studio | `/var/www/html` |
-
----
-
-## 3. Clé SSH Utilisée pour la Supervision
-- **Type :** `ED25519`
-- **Clé publique :**
-  ```text
-  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPdWLxjVIzwqlpIS+/gfm311aDN9zCXA5HjPeVXmApQK root@supervision
+## Fonctionnalités
+1. **Santé en direct :** Espace disque, RAM, charge processeur, uptime et mises à jour Debian en attente.
+2. **Maintenance instantanée :** Bascule automatique vers une page stylisée `maintenance.html` sans couper les fichiers d'origine.
+3. **Mises à jour système :** Lancement des mises à jour Debian `apt-get dist-upgrade` avec activation et désactivation automatique de la page de maintenance.
+4. **Tâche nocturne Cron :** Audit et mise à jour quotidienne à 03h00 du matin.
