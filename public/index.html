@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Centre de contrôle</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-left">
+            <span class="nav-item">Assurances <span class="badge badge-orange">2</span></span>
+            <span class="nav-item">Logements</span>
+            <span class="nav-item">Messages</span>
+            <span class="nav-item">Documents</span>
+            <span class="nav-item">Bilan</span>
+            <span class="nav-item">Paramètres</span>
+            <span class="nav-item active-nav">🛠 Contrôle</span>
+        </div>
+        <div class="nav-right">
+            <span class="status-pill green"><span class="dot green"></span> Serveur en bonne santé</span>
+            <span class="status-pill green"><span class="dot green"></span> Agent serveur actif</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Subheader Title -->
+        <div class="header-section">
+            <div class="title-row">
+                <h1>🛠 Centre de contrôle</h1>
+            </div>
+            <div class="subtitle">
+                Debian 12.15 — cluster proxmox LXC — <span id="current-lxc-name">Sélectionner un conteneur</span> — site version 3.47
+            </div>
+        </div>
+
+        <!-- LXC Container Selector Tabs -->
+        <div class="lxc-selector" id="lxc-buttons"></div>
+
+        <!-- Section Tabs Navigation -->
+        <nav class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('maintenance')">Maintenance</button>
+            <button class="tab-btn" onclick="switchTab('sante')">Santé</button>
+            <button class="tab-btn" onclick="switchTab('updates')">Mises à jour</button>
+            <button class="tab-btn" onclick="switchTab('operations')">Opérations</button>
+            <button class="tab-btn" onclick="switchTab('sauvegardes')">Sauvegardes</button>
+            <button class="tab-btn" onclick="switchTab('securite')">Sécurité</button>
+        </nav>
+
+        <!-- TAB 1: MAINTENANCE -->
+        <div id="tab-maintenance" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Maintenance <span id="maint-status-badge" class="badge-status green">site ouvert</span></h2>
+                </div>
+                <div class="card-body">
+                    <label class="input-label">Message (vide = message standard)</label>
+                    <input type="text" id="maint-message" class="text-input" placeholder="Mise à jour du serveur en cours, le site revient dans quelques minutes.">
+
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="setMaintenance('announce')">📢 Annoncer</button>
+                        <button class="action-btn" onclick="setMaintenance('15m')">🔒 Fermer 15 min</button>
+                        <button class="action-btn" onclick="setMaintenance('1h')">🔒 1 heure</button>
+                        <button class="action-btn" onclick="setMaintenance('tomorrow')">🔒 Jusqu'à demain 8 h</button>
+                        <button class="action-btn" onclick="setMaintenance('unlimited')">🔒 Sans limite</button>
+                        <button class="action-btn btn-green" onclick="disableMaintenance()">🔓 Rouvrir le site</button>
+                    </div>
+
+                    <p class="helper-text">
+                        <strong>Fermé</strong> = les locataires et visiteurs voient une page « Site en maintenance » ; vous gardez l'accès. Les mises à jour lancées ici mettent le site en maintenance toutes seules.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SANTÉ DU SERVEUR -->
+        <div id="tab-sante" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Santé du conteneur</h2>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Disque</strong></div>
+                        <div class="metric-value">
+                            <span id="disk-info">5 % utilisé — 35.7 Go libres sur 39 Go</span>
+                            <div class="progress-bar"><div id="disk-bar" class="progress-fill green" style="width: 5%;"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-row">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Mémoire</strong></div>
+                        <div class="metric-value">
+                            <span id="mem-info">11 % utilisée — 3404 Mo libres sur 3832 Mo</span>
+                            <div class="progress-bar"><div id="mem-bar" class="progress-fill green" style="width: 11%;"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-row">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Processeur</strong></div>
+                        <div class="metric-value">
+                            <span id="cpu-info">charge 0.07 pour 2 cœur(s)</span>
+                            <div class="progress-bar"><div id="cpu-bar" class="progress-fill green" style="width: 7%;"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-row simple">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Allumé depuis</strong></div>
+                        <div class="metric-value" id="uptime-info">9 h</div>
+                    </div>
+
+                    <div class="metric-row simple">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Certificat HTTPS</strong></div>
+                        <div class="metric-value">valable jusqu'au 04/01/2027 (88 jours) — renouvelé automatiquement</div>
+                    </div>
+
+                    <div class="metric-row simple">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Dernière sauvegarde</strong></div>
+                        <div class="metric-value">il y a 4 h (7 gardées)</div>
+                    </div>
+
+                    <div class="metric-row simple">
+                        <div class="metric-title"><span class="dot green"></span> <strong>Données du site</strong></div>
+                        <div class="metric-value">base 0.1 Mo — documents 0 Mo</div>
+                    </div>
+
+                    <div class="buttons-inline">
+                        <button class="btn-outline" onclick="triggerAction('restart_web')">Redémarrer le site</button>
+                        <button class="btn-outline-danger" onclick="triggerAction('reboot')">Redémarrer le serveur</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MISES À JOUR -->
+        <div id="tab-updates" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Mises à jour du système</h2>
+                </div>
+                <div class="card-body">
+                    <p class="update-summary">
+                        <span class="dot orange"></span> <strong id="update-count-text">Debian : 0 mise(s) à jour en attente.</strong>
+                    </p>
+                    <div style="margin-top: 1.5rem;">
+                        <button class="action-btn btn-orange" onclick="runSystemUpdate()">⚡ Lancer la mise à jour maintenant (avec page de maintenance automatique)</button>
+                    </div>
+                    <div id="update-terminal" class="terminal-log" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4, 5, 6: AUTRES MODULES -->
+        <div id="tab-operations" class="tab-content"><div class="card"><div class="card-body">Opérations et audits automatisés opérationnels.</div></div></div>
+        <div id="tab-sauvegardes" class="tab-content"><div class="card"><div class="card-body">Sauvegardes Proxmox PBS & Snapshots synchronisés.</div></div></div>
+        <div id="tab-securite" class="tab-content"><div class="card"><div class="card-body">Firewall actif, Fail2ban opérationnel, Ports non nécessaires fermés.</div></div></div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

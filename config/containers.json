@@ -1,0 +1,7 @@
+[
+  { "id": 105, "name": "portail-sante", "ip": "192.168.96.23", "ssh_user": "root", "web_path": "/var/www/html" },
+  { "id": 108, "name": "Fiches-inscriptions-docuseal", "ip": "192.168.96.58", "ssh_user": "root", "web_path": "/var/www/html" },
+  { "id": 109, "name": "Gestion-inscriptions-profs", "ip": "192.168.96.78", "ssh_user": "root", "web_path": "/var/www/html" },
+  { "id": 111, "name": "fiche-sanitaire-claude", "ip": "192.168.96.52", "ssh_user": "root", "web_path": "/var/www/html" },
+  { "id": 113, "name": "fiche-infirmerie-studio", "ip": "192.168.96.106", "ssh_user": "root", "web_path": "/var/www/html" }
+]
